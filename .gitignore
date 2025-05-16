@@ -1,0 +1,9 @@
+# Ignore build directory
+cmake-build-relwithdebinfo/
+
+# Ignore IDE configuration files
+.idea/
+
+Releases/
+bak/
+*.zip

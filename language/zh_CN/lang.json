@@ -1,0 +1,17 @@
+{
+  "ECleaner has been enable,version: ": "ECleaner已启用,版本: ",
+  "The server's current average TPS has fallen below the set value, and entity cleanup will begin soon.": "服务器当前平均tps已低于设定值，即将开始实体清理",
+  "Number of dropped items cleaned up: ": "已清理掉落物数: ",
+  "Number of entities cleaned up: ": "已清理实体数: ",
+  "No entities were cleaned up.": "未清理任何实体。",
+  "There are 30 seconds remaining until the server entity cleanup begins.": "距离清理服务器实体还有30秒",
+  "ECL Config Menu": "ECL配置菜单",
+  "Auto clean entity": "自动清理实体",
+  "Auto clean item": "自动清理掉落物",
+  "Entity whitelist mode": "实体白名单模式",
+  "Item whitelist mode": "掉落物白名单模式",
+  "Scheduled cleanup interval time(min)": "定时清理时间间隔(分钟)",
+  "Minimum TPS to trigger automatic cleanup": "触发自动清理最低tps",
+  "Config file update over": "配置文件更新完成",
+  "Reload completed.": "重载完成"
+}
