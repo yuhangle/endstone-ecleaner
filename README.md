@@ -1,7 +1,5 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&height=300&color=gradient&text=ECleaner)
 
-> The plugin is still under development, feedback is welcome.
-
 [简体中文](README_zh-CN.md)
 
 ## Introduction
