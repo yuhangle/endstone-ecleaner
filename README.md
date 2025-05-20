@@ -86,8 +86,6 @@ The default configuration of the configuration file is as follows:
 
 **Command List (All commands are administrator-only)**
 
-Open the territory menu
-
 ```shell
 /ecl
 ```
