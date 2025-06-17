@@ -7,3 +7,4 @@ cmake-build-relwithdebinfo/
 Releases/
 bak/
 *.zip
+/build/

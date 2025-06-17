@@ -29,6 +29,7 @@ inline bool entity_clean_whitelist;
 inline vector<string> entity_clean_list;
 inline int clean_tps;
 inline int clean_time;
+inline int last_entity;
 
 class ECleaner : public endstone::Plugin {
 public:
@@ -185,6 +186,13 @@ public:
                 return;
             }
         }
+        //排除是否为实体造成的性能问题
+         if (abs(static_cast<int>(getServer().getLevel()->getActors().size()) - last_entity) < 20) {
+             //清理状态为false
+             if (!next_clean) {
+                 return;
+             }
+         }
         //达到触发清理tps,设置下次清理状态
         if (!next_clean) {
             next_clean = true;
@@ -218,6 +226,7 @@ public:
         if (clean_entity_num == 0 && clean_item_num == 0) {
             getServer().broadcastMessage("§l§2 [ECleaner] §r"+endstone::ColorFormat::Yellow+Tran.getLocal("No entities were cleaned up."));
         }
+        last_entity = static_cast<int>(getServer().getLevel()->getActors().size());
     }
 
     //手动执行掉落物清理
