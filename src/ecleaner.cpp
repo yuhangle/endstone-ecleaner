@@ -4,9 +4,9 @@
 
 #include "ecleaner.h"
 
-ENDSTONE_PLUGIN("ecleaner", "0.1.2", ECleaner)
+ENDSTONE_PLUGIN("ecleaner", "0.1.3", ECleaner)
 {
-    description = "My first C++ plugin for Endstone servers";
+    description = "a plugin for endstone to clean entity";
 
     command("ecl")
             .description("ECleaner")
