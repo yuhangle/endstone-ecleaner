@@ -1,0 +1,147 @@
+name: Build Endstone Ecleaner
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号（例如 1.2.3，会自动加上 v 前缀）'
+        required: true
+      publish_release:
+        description: '是否发布 Release'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+        # 只保留 os 维度
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ===== Linux =====
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg lsb-release software-properties-common unzip zip
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 16
+          sudo apt-get install -y libc++-16-dev libc++abi-16-dev cmake
+      - name: Configure CMake (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_C_COMPILER=clang-16 \
+                -DCMAKE_CXX_COMPILER=clang++-16 \
+                -DCMAKE_CXX_FLAGS="-stdlib=libc++"
+      # ===== Windows =====
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release `
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+
+      # ===== Build =====
+      - name: Build
+        run: cmake --build build --config Release
+
+      # ===== Prepare plugin artifact (Linux) =====
+      - name: Prepare plugin artifact (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          SO_FILE=$(find build -name "*.so" | head -n 1)
+          if [ -z "$SO_FILE" ]; then
+            echo "No .so file found!"
+            exit 1
+          fi
+          if [ "$SO_FILE" != "build/endstone_ecleaner.so" ]; then
+            cp "$SO_FILE" build/endstone_ecleaner.so
+          fi
+
+      # ===== Upload plugin artifact =====
+      - name: Upload plugin artifact (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecleaner-linux-plugin
+          path: build/endstone_ecleaner.so
+
+      - name: Upload plugin artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecleaner-windows-plugin
+          path: |
+            ${{ github.workspace }}\build\Release\endstone_ecleaner.dll
+
+  release:
+    name: Publish Release
+    needs: build
+    if: ${{ github.event.inputs.publish_release == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all plugin artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ecleaner-*-plugin
+          merge-multiple: false
+          path: artifacts
+
+      - name: Prepare and Package All
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          LANGS=(zh_CN en_US)
+          OS_LIST=(linux windows)
+          for OS in "${OS_LIST[@]}"; do
+            if [[ "$OS" == "linux" ]]; then
+              PLUGIN_PATH=$(find artifacts/ecleaner-linux-plugin -name "endstone_ecleaner.so" | head -n 1)
+              EXT=so
+            else
+              PLUGIN_PATH=$(find artifacts/ecleaner-windows-plugin -name "endstone_ecleaner.dll" | head -n 1)
+              EXT=dll
+            fi
+            for LANG in "${LANGS[@]}"; do
+              BUILD_DIR=package
+              mkdir -p ${BUILD_DIR}/ecleaner
+              cp "$PLUGIN_PATH" ${BUILD_DIR}/endstone_ecleaner.${EXT}
+              cp "language/${LANG}/lang.json" ${BUILD_DIR}/ecleaner/lang.json
+              ZIP_NAME=ecleaner_v${VERSION}_${OS}_${LANG}.zip
+              cd ${BUILD_DIR}
+              zip -r ../${ZIP_NAME} endstone_ecleaner.${EXT} ecleaner
+              cd ..
+              mv ${ZIP_NAME} artifacts/
+              rm -rf ${BUILD_DIR}
+            done
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Endstone Ecleaner v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: false
+          files: artifacts/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          name: ecleaner-windows-${{ matrix.lang }}
+          path: ecleaner_v${{ github.event.inputs.version }}_${{ matrix.os }}_${{ matrix.lang }}.zip

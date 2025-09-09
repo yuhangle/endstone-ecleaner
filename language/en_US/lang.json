@@ -1,0 +1,17 @@
+{
+  "ECleaner has been enable,version: ": "ECleaner has been enable,version: ",
+  "The server's current average TPS has fallen below the set value, and entity cleanup will begin soon.": "The server's current average TPS has fallen below the set value, and entity cleanup will begin soon.",
+  "Number of dropped items cleaned up: ": "Number of dropped items cleaned up: ",
+  "Number of entities cleaned up: ": "Number of entities cleaned up: ",
+  "No entities were cleaned up.": "No entities were cleaned up.",
+  "There are 30 seconds remaining until the server entity cleanup begins.": "There are 30 seconds remaining until the server entity cleanup begins.",
+  "ECL Config Menu": "ECL Config Menu",
+  "Auto clean entity": "Auto clean entity",
+  "Auto clean item": "Auto clean item",
+  "Entity whitelist mode": "Entity whitelist mode",
+  "Item whitelist mode": "Item whitelist mode",
+  "Scheduled cleanup interval time(min)": "Scheduled cleanup interval time(min)",
+  "Minimum TPS to trigger automatic cleanup": "Minimum TPS to trigger automatic cleanup",
+  "Config file update over": "Config file update over",
+  "Reload completed.": "Reload completed."
+}

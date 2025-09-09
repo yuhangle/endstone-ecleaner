@@ -497,7 +497,7 @@ public:
         CleanTps.setStep(1);
 
         menu.setControls({AutoEntityClean,AutoItemClean,EntityWhiteList,ItemWhiteList,CleanTime,CleanTps});
-        menu.setOnSubmit([=](endstone::Player* p, const string& response) {
+        menu.setOnSubmit([this](endstone::Player* p, const string& response) {
             json response_json = json::parse(response);
             bool auto_entity_clean_new = response_json[0].get<bool>();
             bool auto_item_clean_new = response_json[1].get<bool>();
