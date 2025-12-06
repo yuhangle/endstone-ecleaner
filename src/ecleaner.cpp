@@ -21,9 +21,21 @@ int clean_tps;
 int clean_time;
 int last_entity;
 
+//默认config
+vector<string> item_clean_list_default = {"Shulker Box", "White Shulker Box", "Light Gray Shulker Box", "Gray Shulker Box",
+                   "Black Shulker Box", "Brown Shulker Box", "Red Shulker Box", "Orange Shulker Box",
+                   "Yellow Shulker Box", "Lime Shulker Box", "Green Shulker Box", "Cyan Shulker Box",
+                   "Light Blue Shulker Box", "Blue Shulker Box", "Purple Shulker Box",
+                   "Magenta Shulker Box", "Pink Shulker Box"};
+
+vector<string> entity_clean_list_default = {"minecraft:zombie_pigman","minecraft:zombie","minecraft:skeleton","minecraft:bogged","minecraft:slime"};
+
+
+
 //数据目录和配置文件检查
 void ECleaner::datafile_check() const {
     json df_config = {
+            {"language","zh_CN"},
             {"auto_item_clean", true},
             {"auto_entity_clean", true},
             {"item_clean_whitelist", true},
@@ -67,7 +79,7 @@ void ECleaner::datafile_check() const {
             for (auto& [key, value] : df_config.items()) {
                 if (!loaded_config.contains(key)) {
                     loaded_config[key] = value;
-                    getLogger().info(Tran.getLocal("Config '{}' has update with default config")+","+key);
+                    getLogger().info(Tran.tr("Config '{}' has update with default config",key));
                     need_update = true;
                 }
             }
@@ -81,6 +93,9 @@ void ECleaner::datafile_check() const {
                 }
             }
         }
+    }
+    if (!(std::filesystem::exists(language_path))) {
+        std::filesystem::create_directory(language_path);
     }
 }
 
@@ -229,8 +244,7 @@ void ECleaner::auto_clean() {
     if (getServer().getOnlinePlayers().empty()) {
         return;
     }
-    endstone::CommandSenderWrapper commandSenderWrapper(getServer().getCommandSender());
-    if (getServer().dispatchCommand(commandSenderWrapper,"playsound note.banjo @a")) {
+    if (endstone::CommandSenderWrapper commandSenderWrapper(getServer().getCommandSender()); getServer().dispatchCommand(commandSenderWrapper,"playsound note.banjo @a")) {
     }
     getServer().broadcastMessage("§l§2 [ECleaner] §r"+endstone::ColorFormat::Yellow+Tran.getLocal("There are 30 seconds remaining until the server entity cleanup begins."));
     getServer().getScheduler().runTaskTimer(*this,[&]() { run_clean(); }, 600, 0);
@@ -238,6 +252,8 @@ void ECleaner::auto_clean() {
 
 void ECleaner::onLoad() {
     getLogger().info("onLoad is called");
+    language_file = language_path + getServer().getLanguage().getLocale() + ".json";
+    Tran = translate(language_file);
     Tran.loadLanguage();
     datafile_check();
 }
@@ -248,6 +264,16 @@ void ECleaner::onEnable() {
 
     //进行一个配置文件的读取
     json json_msg = read_config();
+    //设置默认
+    string language = "en_US";
+    auto_item_clean = true;
+    auto_entity_clean = true;
+    item_clean_whitelist = true;
+    entity_clean_whitelist = false;
+    item_clean_list = item_clean_list_default;
+    entity_clean_list = entity_clean_list_default;
+    clean_tps = 16;
+    clean_time = 15;
     try {
         if (!json_msg.contains("error")) {
             auto_item_clean = json_msg["auto_item_clean"];
@@ -258,36 +284,17 @@ void ECleaner::onEnable() {
             entity_clean_list = json_msg["entity_clean_list"];
             clean_tps = json_msg["clean_tps"];
             clean_time = json_msg["clean_time"];
+            language = json_msg["language"];
         } else {
             getLogger().error(Tran.getLocal("Config file error!Use default config"));
-            auto_item_clean = true;
-            auto_entity_clean = true;
-            item_clean_whitelist = true;
-            entity_clean_whitelist = false;
-            item_clean_list = {"Shulker Box", "White Shulker Box", "Light Gray Shulker Box", "Gray Shulker Box",
-                               "Black Shulker Box", "Brown Shulker Box", "Red Shulker Box", "Orange Shulker Box",
-                               "Yellow Shulker Box", "Lime Shulker Box", "Green Shulker Box", "Cyan Shulker Box",
-                               "Light Blue Shulker Box", "Blue Shulker Box", "Purple Shulker Box",
-                               "Magenta Shulker Box", "Pink Shulker Box"};
-            entity_clean_list = {"minecraft:zombie_pigman","minecraft:zombie","minecraft:skeleton","minecraft:bogged","minecraft:slime"};
-            clean_tps = 16;
-            clean_time = 15;
         }
     } catch (const std::exception& e) {
-        auto_item_clean = true;
-        auto_entity_clean = true;
-        item_clean_whitelist = true;
-        entity_clean_whitelist = false;
-        item_clean_list = {"Shulker Box", "White Shulker Box", "Light Gray Shulker Box", "Gray Shulker Box",
-                           "Black Shulker Box", "Brown Shulker Box", "Red Shulker Box", "Orange Shulker Box",
-                           "Yellow Shulker Box", "Lime Shulker Box", "Green Shulker Box", "Cyan Shulker Box",
-                           "Light Blue Shulker Box", "Blue Shulker Box", "Purple Shulker Box",
-                           "Magenta Shulker Box", "Pink Shulker Box"};
-        entity_clean_list = {"minecraft:zombie_pigman","minecraft:zombie","minecraft:skeleton","minecraft:bogged","minecraft:slime"};
-        clean_tps = 16;
-        clean_time = 15;
         getLogger().error(Tran.getLocal("Config file error!Use default config")+","+e.what());
     }
+    language_file = language_path+language+".json";
+    Tran = translate(language_file);
+    Tran.loadLanguage();
+    Tran.checkLanguageCommon(language_path, language_file);
     //5秒检查一次tps,延迟30秒
     getServer().getScheduler().runTaskTimer(*this,[&]() { check_server_run_clean(); }, 0, 100);
     //定时清理
@@ -318,6 +325,15 @@ bool ECleaner::onCommand(endstone::CommandSender &sender, const endstone::Comman
                 else if (args[0] == "reload") {
                     //进行一个配置文件的读取
                     json json_msg = read_config();
+                    //设置默认
+                    auto_item_clean = true;
+                    auto_entity_clean = true;
+                    item_clean_whitelist = true;
+                    entity_clean_whitelist = false;
+                    item_clean_list = item_clean_list_default;
+                    entity_clean_list = entity_clean_list_default;
+                    clean_tps = 16;
+                    clean_time = 15;
                     try {
                         if (!json_msg.contains("error")) {
                             auto_item_clean = json_msg["auto_item_clean"];
@@ -330,32 +346,8 @@ bool ECleaner::onCommand(endstone::CommandSender &sender, const endstone::Comman
                             clean_time = json_msg["clean_time"];
                         } else {
                             getLogger().error(Tran.getLocal("Config file error!Use default config"));
-                            auto_item_clean = true;
-                            auto_entity_clean = true;
-                            item_clean_whitelist = true;
-                            entity_clean_whitelist = false;
-                            item_clean_list = {"Shulker Box", "White Shulker Box", "Light Gray Shulker Box", "Gray Shulker Box",
-                                               "Black Shulker Box", "Brown Shulker Box", "Red Shulker Box", "Orange Shulker Box",
-                                               "Yellow Shulker Box", "Lime Shulker Box", "Green Shulker Box", "Cyan Shulker Box",
-                                               "Light Blue Shulker Box", "Blue Shulker Box", "Purple Shulker Box",
-                                               "Magenta Shulker Box", "Pink Shulker Box"};
-                            entity_clean_list = {"minecraft:zombie_pigman","minecraft:zombie","minecraft:skeleton","minecraft:bogged","minecraft:slime"};
-                            clean_tps = 16;
-                            clean_time = 15;
                         }
                     } catch (const std::exception& e) {
-                        auto_item_clean = true;
-                        auto_entity_clean = true;
-                        item_clean_whitelist = true;
-                        entity_clean_whitelist = false;
-                        item_clean_list = {"Shulker Box", "White Shulker Box", "Light Gray Shulker Box", "Gray Shulker Box",
-                                           "Black Shulker Box", "Brown Shulker Box", "Red Shulker Box", "Orange Shulker Box",
-                                           "Yellow Shulker Box", "Lime Shulker Box", "Green Shulker Box", "Cyan Shulker Box",
-                                           "Light Blue Shulker Box", "Blue Shulker Box", "Purple Shulker Box",
-                                           "Magenta Shulker Box", "Pink Shulker Box"};
-                        entity_clean_list = {"minecraft:zombie_pigman","minecraft:zombie","minecraft:skeleton","minecraft:bogged","minecraft:slime"};
-                        clean_tps = 16;
-                        clean_time = 15;
                         getLogger().error(Tran.getLocal("Config file error!Use default config")+","+e.what());
                     }
                     //定时清理
@@ -427,7 +419,7 @@ bool ECleaner::onCommand(endstone::CommandSender &sender, const endstone::Comman
                 //定时清理
                 if (clean_time >= 1) {
                     auto_clean_task->cancel();
-                    std::uint64_t clean_pre_time = clean_time*60*20;
+                    const std::uint64_t clean_pre_time = clean_time*60*20;
                     auto_clean_task = getServer().getScheduler().runTaskTimer(*this, [&]() { auto_clean(); }, 0, clean_pre_time);
                 }
             }
