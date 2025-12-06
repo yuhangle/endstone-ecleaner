@@ -1,0 +1,2 @@
+#pragma once
+#define ECLEANER_PLUGIN_VERSION "@PROJECT_VERSION@"

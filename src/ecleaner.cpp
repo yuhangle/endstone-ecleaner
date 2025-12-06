@@ -3,6 +3,7 @@
 //
 
 #include "ecleaner.h"
+#include "version.h"
 
 translate Tran;
 const string data_path = "plugins/ecleaner";
@@ -531,7 +532,7 @@ void ECleaner::ecl_main_menu(endstone::Player& player) {
 }
 
 //插件信息
-ENDSTONE_PLUGIN("ecleaner", "0.1.3", ECleaner)
+ENDSTONE_PLUGIN("ecleaner", ECLEANER_PLUGIN_VERSION, ECleaner)
 {
     description = "a plugin for endstone to clean entity";
 
