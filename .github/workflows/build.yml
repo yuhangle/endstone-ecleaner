@@ -191,7 +191,7 @@ jobs:
             cp -r language/* ${BUILD_DIR}/ecleaner/language/
             ZIP_NAME=ecleaner_plugin_v${VERSION}_${OS}.zip
             cd ${BUILD_DIR}
-            zip -r ../${ZIP_NAME} endstone_ecleaner.${EXT} ecleaner_data
+            zip -r ../${ZIP_NAME} endstone_ecleaner.${EXT} ecleaner
             cd ..
             mv ${ZIP_NAME} artifacts/
             rm -rf ${BUILD_DIR}
