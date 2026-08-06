@@ -253,14 +253,14 @@ void ECleaner::auto_clean() {
 
 void ECleaner::onLoad() {
     getLogger().info("onLoad is called");
-    language_file = language_path + getServer().getLanguage().getLocale() + ".json";
-    Tran = translate(language_file);
-    Tran.loadLanguage();
     datafile_check();
 }
 
 void ECleaner::onEnable() {
     getLogger().info("onEnable is called");
+    language_file = language_path + getServer().getLanguage().getLocale() + ".json";
+    Tran = translate(language_file);
+    Tran.loadLanguage();
     getLogger().info(endstone::ColorFormat::Yellow+Tran.getLocal("ECleaner has been enable,version: ")+getServer().getPluginManager().getPlugin("ecleaner")->getDescription().getVersion());
 
     //进行一个配置文件的读取
@@ -295,7 +295,7 @@ void ECleaner::onEnable() {
     language_file = language_path+language+".json";
     Tran = translate(language_file);
     Tran.loadLanguage();
-    Tran.checkLanguageCommon(language_path, language_file);
+    translate::checkLanguageCommon(language_path, language_file);
     //5秒检查一次tps,延迟30秒
     getServer().getScheduler().runTaskTimer(*this,[&]() { check_server_run_clean(); }, 0, 100);
     //定时清理

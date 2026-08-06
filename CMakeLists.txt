@@ -82,7 +82,7 @@ else()
 endif()
 
 # 基础版本（主版本号）
-set(BASE_VERSION "0.1.4")
+set(BASE_VERSION "0.1.5")
 
 # 检查是否为正式发布版本
 if(RELEASE_VERSION)
